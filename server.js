@@ -42,8 +42,8 @@ app.use(xss());
 
 // CORS Setup (Enables cookies to be exchanged securely between frontend and API)
 const allowedOrigins = [
-  process.env.FRONTEND_URL || 'http://localhost:5173',
-  'https://narrato-frontend-two.vercel.app/',
+  process.env.FRONTEND_URL || 'https://blog-app-frontend-two-nu.vercel.app',
+  'https://blog-app-frontend-two-nu.vercel.app',
 ].filter(Boolean);
 
 const corsOptions = {

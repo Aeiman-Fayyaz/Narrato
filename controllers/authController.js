@@ -166,7 +166,7 @@ exports.forgotPassword = async (req, res, next) => {
 
     // Create reset URL
     const resetUrl = `${req.protocol}://${req.get('host')}/api/auth/resetpassword/${resetToken}`;
-    const frontendResetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
+    const frontendResetUrl = `${process.env.FRONTEND_URL || 'https://blog-app-frontend-two-nu.vercel.app'}/reset-password/${resetToken}`;
 
     console.log(`=== PASSWORD RESET URL ===\nAPI: ${resetUrl}\nFrontend: ${frontendResetUrl}\n==========================`);
 
