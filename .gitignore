@@ -1,2 +1,8 @@
-node_modules
-. env
+# Ye zaroor hona chahiye
+.env
+.env.local
+.env.development
+.env.production
+
+# Node modules bhi ignore karo
+node_modules/
