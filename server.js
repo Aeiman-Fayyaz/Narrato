@@ -43,7 +43,10 @@ app.use(xss());
 // CORS Setup (Enables cookies to be exchanged securely between frontend and API)
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'https://blog-app-frontend-two-nu.vercel.app',
-  'https://blog-app-frontend-two-nu.vercel.app',
+  'https://narrato-jsl9.vercel.app',
+  'http://localhost:5173',     // 👈 Vite ka default port
+  'http://localhost:3000',     // 👈 React ka default port
+  'http://localhost:5000', 
 ].filter(Boolean);
 
 const corsOptions = {
