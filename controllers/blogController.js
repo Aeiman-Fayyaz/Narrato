@@ -352,15 +352,30 @@ exports.toggleBlogLike = async (req, res, next) => {
 // @access  Private
 exports.getUserDashboardStats = async (req, res, next) => {
   try {
-    const blogs = await Blog.find({ author: req.user.id })
+    // Fetch author's own blogs
+    const authoredBlogs = await Blog.find({ author: req.user.id })
       .populate('category', 'name slug')
+      .populate('author', 'name avatar bio')
       .sort({ createdAt: -1 });
 
-    const totalBlogs = blogs.length;
-    const publishedBlogs = blogs.filter(b => b.status === 'published').length;
+    // Fetch blogs shared by this user
+    const sharedBlogIds = (await User.findById(req.user.id)).sharedBlogs || [];
+    const sharedBlogs = await Blog.find({ _id: { $in: sharedBlogIds } })
+      .populate('category', 'name slug')
+      .populate('author', 'name avatar bio')
+      .sort({ createdAt: -1 });
+
+    // Combine and mark shared blogs
+    const blogs = [
+      ...authoredBlogs.map(b => ({ ...b.toObject(), isSharedByMe: false })),
+      ...sharedBlogs.map(b => ({ ...b.toObject(), isSharedByMe: true })),
+    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    const totalBlogs = authoredBlogs.length;
+    const publishedBlogs = authoredBlogs.filter(b => b.status === 'published').length;
     const draftBlogs = totalBlogs - publishedBlogs;
-    const totalViews = blogs.reduce((sum, b) => sum + (b.views || 0), 0);
-    const totalLikes = blogs.reduce((sum, b) => sum + (b.likes ? b.likes.length : 0), 0);
+    const totalViews = authoredBlogs.reduce((sum, b) => sum + (b.views || 0), 0);
+    const totalLikes = authoredBlogs.reduce((sum, b) => sum + (b.likes ? b.likes.length : 0), 0);
 
     res.status(200).json({
       success: true,
@@ -415,6 +430,101 @@ exports.getAdminDashboardStats = async (req, res, next) => {
       },
       categoryStats,
       blogs,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Share a blog to user's feed (track share, don't create new blog)
+// @route   POST /api/blogs/:id/share
+// @access  Private
+exports.shareBlogToFeed = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
+
+    // Validate blog ID
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid blog ID' });
+    }
+
+    // Get the original blog
+    const blog = await Blog.findById(id)
+      .populate('author', 'name avatar bio email')
+      .populate('category', 'name slug');
+    if (!blog) {
+      return res.status(404).json({ success: false, message: 'Blog not found' });
+    }
+
+    // Check if user has already shared this blog
+    if (blog.sharedBy && blog.sharedBy.includes(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already shared this blog',
+      });
+    }
+
+    // Add user to blog's sharedBy array
+    if (!blog.sharedBy) {
+      blog.sharedBy = [];
+    }
+    blog.sharedBy.push(userId);
+    await blog.save();
+
+    // Add blog to user's sharedBlogs array
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $addToSet: { sharedBlogs: id } },
+      { new: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Blog shared to your feed successfully',
+      blog,
+      isShared: true,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Remove a blog share (unshare from user's feed)
+// @route   DELETE /api/blogs/:id/share
+// @access  Private
+exports.removeShareFromFeed = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
+
+    // Validate blog ID
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid blog ID' });
+    }
+
+    // Get the blog
+    const blog = await Blog.findById(id);
+    if (!blog) {
+      return res.status(404).json({ success: false, message: 'Blog not found' });
+    }
+
+    // Remove user from blog's sharedBy array
+    if (blog.sharedBy) {
+      blog.sharedBy = blog.sharedBy.filter(id => id.toString() !== userId.toString());
+      await blog.save();
+    }
+
+    // Remove blog from user's sharedBlogs array
+    await User.findByIdAndUpdate(
+      userId,
+      { $pull: { sharedBlogs: id } },
+      { new: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Blog share removed successfully',
     });
   } catch (error) {
     next(error);
