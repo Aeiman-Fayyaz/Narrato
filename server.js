@@ -20,7 +20,9 @@ const categoryRoutes = require('./routes/categoryRoutes');
 // Connect to MongoDB Database and run Seeder
 connectDB().then(() => {
   const seedData = require('./config/seed');
+  const cleanupDollarSign = require('./config/cleanupDollarSign');
   seedData();
+  cleanupDollarSign();
 });
 
 const app = express();
@@ -45,6 +47,7 @@ const allowedOrigins = [
   process.env.FRONTEND_URL || 'https://blog-app-frontend-two-nu.vercel.app',
   'https://narrato-jsl9.vercel.app',
   'http://localhost:5173',     // 👈 Vite ka default port
+  'http://localhost:5174',     // 👈 Current Vite port
   'http://localhost:3000',     // 👈 React ka default port
   'http://localhost:5000', 
 ].filter(Boolean);
