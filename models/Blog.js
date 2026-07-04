@@ -58,7 +58,13 @@ const blogSchema = new mongoose.Schema({
   readTime: {
     type: Number,
     default: 1,
-  }
+  },
+  sharedBy: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    }
+  ],
 }, {
   timestamps: true,
 });

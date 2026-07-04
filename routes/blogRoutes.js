@@ -8,6 +8,8 @@ const {
   toggleBlogLike,
   getUserDashboardStats,
   getAdminDashboardStats,
+  shareBlogToFeed,
+  removeShareFromFeed,
 } = require('../controllers/blogController');
 const { protect, authorize } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -27,5 +29,7 @@ router.post('/', protect, upload.single('image'), createBlog);
 router.put('/:id', protect, upload.single('image'), updateBlog);
 router.delete('/:id', protect, deleteBlog);
 router.put('/:id/like', protect, toggleBlogLike);
+router.post('/:id/share', protect, shareBlogToFeed);
+router.delete('/:id/share', protect, removeShareFromFeed);
 
 module.exports = router;

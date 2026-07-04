@@ -88,7 +88,7 @@ app.use('/api/categories', categoryRoutes);
 app.get('/', (req, res) => {
   res.status(200).json({
     success: true,
-    message: 'BlogVerse REST API is running successfully.',
+    message: 'Narrato REST API is running successfully.',
     version: '1.0.0',
   });
 });
